@@ -1,5 +1,9 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
+import Search from "./components/Search";
+import Pagination from "./components/Pagination";
+import MoviesTable from "./components/MoviesTable";
+import MovieDetails from "./components/MovieDetails";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -11,7 +15,7 @@ const API_OPTIONS = {
   },
 };
 
-type Movie = {
+export type Movie = {
   id: number;
   title: string;
   overview: string;
@@ -55,141 +59,37 @@ function App() {
     }
 
     const data = (await response.json()) as RawResults;
-    console.log(data);
+    //console.log(data);
     setMovies(data.results);
     setCurrentPage(data.page);
     setTotalPages(data.total_pages);
-  }, [currentPage, search]);
+  }, [search, currentPage]);
 
   useEffect(() => {
     fetchMovies();
   }, [fetchMovies]);
 
-  /*useEffect(() => {
-    if (currentMovie) alert(currentMovie);
-  }, [currentMovie]);*/
-
-  function handleSearch(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const query: string = formData.get("query")?.toString() ?? "";
-    setSearch(query);
-    setCurrentPage(1);
-  }
-
-  function handlePagination(newCurrentPage: number) {
-    setCurrentPage(newCurrentPage);
-  }
-
-  function handleViewDetail(newCurrentMovie: Movie) {
-    setCurrentMovie(newCurrentMovie);
-  }
-
   return (
     <>
       {currentMovie ? (
-        <div>
-          <h1>{currentMovie.title}</h1>
-          <img
-            src={`https://image.tmdb.org/t/p/w500/${currentMovie.poster_path}`}
-            alt={currentMovie.title}
-          />
-          {/*<img src={poster_path ? `https://image.tmdb.org/t/p/w500/${poster_path}`: '/no-movie.png'} alt={title} />*/}
-          <dl>
-            <dt>ID</dt>
-            <dd>{currentMovie.id}</dd>
-            <dt>Adults</dt>
-            <dd>{currentMovie.adult}</dd>
-            <dt>Genre</dt>
-            <dd>{currentMovie.genre_ids}</dd>
-            <dt>Original Language</dt>
-            <dd>{currentMovie.original_language}</dd>
-            <dt>Original Title</dt>
-            <dd>{currentMovie.original_title}</dd>
-            <dt>Popularity</dt>
-            <dd>{currentMovie.popularity}</dd>
-            <dt>Backdrop</dt>
-            <dd>{currentMovie.backdrop_path}</dd>
-            <dt>Poster</dt>
-            <dd>{currentMovie.poster_path}</dd>
-            <dt>Release Date</dt>
-            <dd>{currentMovie.adult}</dd>
-            <dt>Video</dt>
-            <dd>{currentMovie.video}</dd>
-            <dt>Vote Average</dt>
-            <dd>{currentMovie.vote_average}</dd>
-            <dt>Vote Count</dt>
-            <dd>{currentMovie.vote_count}</dd>
-            <dt>Overview</dt>
-            <dd>{currentMovie.overview}</dd>
-          </dl>
-          <button onClick={() => setCurrentMovie(null)}>Home</button>
-          <img
-            src={`https://image.tmdb.org/t/p/w500/${currentMovie.backdrop_path}`}
-            alt={currentMovie.title}
-          />
-        </div>
+        <MovieDetails
+          currentMovie={currentMovie}
+          setCurrentMovie={setCurrentMovie}
+        />
       ) : (
         <div>
           <header>
             <h1>Movies</h1>
-            <form onSubmit={handleSearch}>
-              <input
-                name="query"
-                /*value={search}
-                onChange={(e) => setSearch(e.target.value)}*/
-              />
-              <button type="submit">Search</button>
-              <button type="reset">Clear</button>
-            </form>
+            <Search setSearch={setSearch} setCurrentPage={setCurrentPage} />
           </header>
           <main>
-            <table>
-              <caption>Movies results:</caption>
-              <thead>
-                <tr>
-                  <th>Id</th>
-                  <th>Title</th>
-                  <th>Release</th>
-                  <th>Rating</th>
-                  <th>View Detail</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movies &&
-                  movies.map((movie) => (
-                    <tr key={movie.id}>
-                      <td>{movie.id}</td>
-                      <td>{movie.title}</td>
-                      <td>{movie.release_date}</td>
-                      <td>{movie.vote_average}</td>
-                      <td>
-                        <button onClick={() => handleViewDetail(movie)}>
-                          Detail
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-            {/*movies && movies.map((movie) => <p key={movie.id}>{movie.title}</p>)*/}
-            <div>
-              <button
-                disabled={currentPage <= 1}
-                onClick={() => handlePagination(currentPage - 1)}
-              >
-                prev
-              </button>
-              <span>
-                {currentPage} / {search ? totalPages : "..."}
-              </span>
-              <button
-                disabled={currentPage >= totalPages}
-                onClick={() => handlePagination(currentPage + 1)}
-              >
-                next
-              </button>
-            </div>
+            <MoviesTable movies={movies} setCurrentMovie={setCurrentMovie} />
+            <Pagination
+              isSearching={!!search}
+              totalPages={totalPages}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+            />
           </main>
         </div>
       )}
